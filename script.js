@@ -116,7 +116,7 @@ plot1.append('text')
      .attr('y', 10)
 
 plot2.append('text')
-     .text('Total Emissions: '+state)
+     .text('Total CO2 Emissions: '+state)
      .attr('class', 'title')
      .attr("text-anchor", "middle")
      .attr('x', width/2 + margin.left)
