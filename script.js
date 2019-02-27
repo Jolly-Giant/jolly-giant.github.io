@@ -1,6 +1,6 @@
 // Define plot boundaries
-var margin = {top: 20, right: 20, bottom: 70, left: 90},
-    width = 600 - margin.left - margin.right,
+var margin = {top: 5, right: 5, bottom: 20, left: 15},
+    width = 420 - margin.left - margin.right,
     height = 250 - margin.top - margin.bottom;
 
 // Define plot scale outputs
@@ -8,7 +8,7 @@ var xScale = d3.scaleTime().range([0, width]),
     yScale = d3.scaleLinear().range([height, 0]);
 
 // Create plot body
-var svg = d3.select('body').append('svg')
+var svg = d3.select('#plot-loc').append('svg')
             .attr('width', width + margin.left + margin.right)
             .attr('height', height + margin.top + margin.bottom)
             .append('g')
@@ -56,15 +56,18 @@ pullData('ELEC.GEN.NG-GA-99.M');
 
 // Y-axis
 svg.append('g')
-   .call(d3.axisLeft(yScale).ticks(5))
+   .call(d3.axisLeft(yScale)
+           .ticks(5))
 
 // X-axis
 svg.append('g')
    .attr("transform", "translate(0," + height + ")")
-   .call(d3.axisBottom(xScale))
+   .call(d3.axisBottom(xScale)
+           .ticks(d3.timeMonth.every(1)))
 
 svg.append('text')
    .text('Power Generation')
    .attr('class', 'title')
-   .attr("text-anchor", "end")
+   .attr("text-anchor", "middle")
    .attr('x', width/2 + margin.left)
+   .attr('y', 10)
