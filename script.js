@@ -66,7 +66,7 @@ svg.append('g')
            .ticks(d3.timeMonth.every(1)))
 
 svg.append('text')
-   .text('Power Generation')
+   .text('Power Generation Sources')
    .attr('class', 'title')
    .attr("text-anchor", "middle")
    .attr('x', width/2 + margin.left)
