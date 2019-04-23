@@ -88,8 +88,8 @@ header .profile-image:hover {
 .card {
   margin: 30px;
   padding: 20px 40px 40px;
-  max-width: 500px;
-  text-align: left;
+  max-width: 700px;
+  text-align: justify;
   background: #fff;
   border-bottom: 4px solid #ccc;
   border-radius: 6px;
@@ -136,6 +136,16 @@ footer ul {
 
 footer ul li {
   display: inline-block;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 a.social {
@@ -208,4 +218,13 @@ a.social:hover {
     text-align: center;
     border: solid black 3px;
     border-radius: 7px;
+}
+
+.image {
+	height: 300px;
+	width: 500px;
+}
+
+.caption {
+	text-align: center;
 }
