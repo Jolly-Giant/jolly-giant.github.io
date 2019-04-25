@@ -115,7 +115,6 @@ var dby1,dbm1,dmo1,dby2,dbm2,dmo2,dby3,dbm3,dmo3;
 var selectyr1,optionsyr1,selectmke1,optionsmke1,selectmdl1,optionsmdl1,selectyr2,optionsyr2,selectmke2,optionsmke2,selectmdl2,optionsmdl2,
 	selectyr3,optionsyr3,selectmke3,optionsmke3,selectmdl3,optionsmdl3;
 
- 
 d3.csv('eia_api/data/vehicle.csv').then(function(data){
 
 	dby1=d3.nest()
