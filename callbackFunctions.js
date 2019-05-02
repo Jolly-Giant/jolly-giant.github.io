@@ -3,9 +3,9 @@
 changeP1 = function(){
 	// Oh my, I was called back!
 	// Should update all plots because states are important!
-	var abv=d3.select("select").property('value').split('-')[0];
+	mainVars.id = d3.select("select").property('value').split('-')[0];
 	clearPlot('1');
-	pullStateData(abv);
+	pullStateData(mainVars.id);
 };
 
 pullStateData = function(state){
@@ -201,11 +201,21 @@ function emission_sum(state) {
     })
 }
 
-changeYear1 = function(){
-	var yr=d3.select(this).property('value');
+clearEmissions = function(index){
+	mainVars.car[index] = '';
+	mainVars.emissionsData[index] = 0;
+  	mainVars.emissionsLabel[index] = '';
+  	mainVars.fuelType[index] = '';
+}
 
-	while(d3.select('#cars-dropdown1').selectAll('Select')._groups[0].length > 1) {
-		d3.select('#cars-dropdown1').selectAll('Select')._groups[0][1].remove()
+changeYear = function(){
+	// Select the year, and determine which dropdown was called back
+	var yr = d3.select(this).property('value');
+	var selectName = d3.select(this.parentNode).property('id');
+	var selectNum = selectName[selectName.length-1];
+
+	while(d3.select('#cars-dropdown'+selectNum).selectAll('Select')._groups[0].length > 1) {
+		d3.select('#cars-dropdown'+selectNum).selectAll('Select')._groups[0][1].remove()
 	}
 
 	if (yr !== undefined) {
@@ -213,44 +223,212 @@ changeYear1 = function(){
 			   .key(function(d){return d.make.toString();})
 			   .map(mainVars.dby1.get(yr));
 
-		var selectmke1 = d3.select("#cars-dropdown1")
+		var selectmke1 = d3.select("#cars-dropdown"+selectNum)
 			.append("select")
 	  		.style("max-width", "120px")
-	  	 	.on('change', changeMake1);
+	  	 	.on('click', changeMake);
 
 		selectmke1.selectAll('option')
 	  	    .data(mainVars.dbm1.keys())
 	  	    .enter()
 	  	    .append('option')
 	  	    .text(function (d) { return d; });
+
+	  	// Clear emissions data
+	  	clearEmissions(selectNum-1);
     };
 };
 
-changeMake1 = function(){
+changeMake = function(){
+	// Select the make, and determine which dropdown was called back
 	var mke=d3.select(this).property('value');
+	var selectName = d3.select(this.parentNode).property('id');
+	var selectNum = selectName[selectName.length-1];
   
-	while(d3.select('#cars-dropdown1').selectAll('Select')._groups[0].length > 2) {
-		d3.select('#cars-dropdown1').selectAll('Select')._groups[0][2].remove()
+  	// Clear old dropdowns
+	while(d3.select('#cars-dropdown'+selectNum).selectAll('Select')._groups[0].length > 2) {
+		d3.select('#cars-dropdown'+selectNum).selectAll('Select')._groups[0][2].remove()
 	}
 
   	if (mke !== undefined) {
+  		// get current dbm1
+  		var yr = d3.select('#cars-dropdown'+selectNum).select('select').property('value');
+  		mainVars.dbm1=d3.nest()
+			   .key(function(d){return d.make.toString();})
+			   .map(mainVars.dby1.get(yr));
+
 		mainVars.dmo1=d3.nest()
 			.key(function(d){return d.model.toString();})
 			   .map(mainVars.dbm1.get(mke.toString()));
 
-		var selectmdl1 = d3.select("#cars-dropdown1")
+		var selectmdl1 = d3.select("#cars-dropdown"+selectNum)
 			.append("select")
 	  		.style("max-width", "120px")
-	  	 	.on('change', changeModel1);
+	  	 	.on('click', changeModel);
 
 		selectmdl1.selectAll('option')
 	  	    .data(mainVars.dmo1.keys())
 	  	    .enter()
 	  	    .append('option')
 	  	    .text(function (d) { return d; });
+
+  	    clearEmissions(selectNum-1);
     };
 }
 
-changeModel1 = function(){
-	var mdl=d3.select(this).property('value');
+changeModel = function(){
+	var mdl = d3.select(this).property('value');
+	var selectName = d3.select(this.parentNode).property('id');
+	var selectNum = selectName[selectName.length-1];
+
+	if (mdl !== undefined){
+		// Get current year and make, and adjust options
+		var yr = d3.select(d3.select('#cars-dropdown'+selectNum).selectAll('select')._groups[0][0]).property('value')
+		var mke = d3.select(d3.select('#cars-dropdown'+selectNum).selectAll('select')._groups[0][1]).property('value')
+
+		dbe=d3.nest()
+  	   .key(function(d){if(parseInt(d.co2TailpipeAGpm)==0){
+  	   			return parseFloat(d.co2TailpipeGpm);}
+			else {
+				return (parseFloat(d.co2TailpipeGpm)+parseFloat(d.co2TailpipeAGpm)/2);}})
+  	   .map(mainVars.dmo1.get(mdl.toString()));
+
+		dbf=d3.nest()
+			.key(function(d){
+				if(d.fuelType1=='Electricity'){
+					mainVars.fuelType[selectNum-1] = 'electric';
+					return parseFloat(d.combE);}
+		  		else if(d.fuelType2=='Electricity'){
+		  			mainVars.fuelType[selectNum-1] = 'hybrid';
+		  			uf=parseFloat(d.combinedUF);
+		  			return parseFloat(d.combE);
+		  		}else {
+		  			mainVars.fuelType[selectNum-1] = 'gas';
+		  		}
+		  		})
+			.map(mainVars.dmo1.get(mdl.toString()));
+
+		mainVars.car[selectNum-1] = mdl;
+		clearPlot('2');
+		vehEmissionCalc();
+	};
 }
+
+vehEmissionCalc = function(changeType) {
+	var text = d3.select('#plot-loc1').select('svg').select('g').selectAll('text')._groups[0];
+	var elecEmissions = parseFloat(text[text.length-1].firstChild.data.split(' ')[2]);
+
+	// Helper function
+	addMainVars = function(index, em){
+		mainVars.emissionsData.splice(index,1,em);
+		mainVars.emissionsLabel.splice(index,1,mainVars.car[i].toString());
+	}
+
+	if (changeType === 'state'){
+		for (i=0; i<3; i++){
+			if(mainVars.fuelType[i]==='electric'){
+				em=(d3.mean(dbf.keys(),function(d){return d;}))/100;
+				em=em*elecEmissions;
+				addMainVars(i, em);
+			};
+		};
+	}else{
+		for (i=0; i<3; i++){
+			if(mainVars.fuelType[i]==='electric'){
+				em=(d3.mean(dbf.keys(),function(d){return d;}))/100;
+				em=em*elecEmissions;
+				addMainVars(i, em);
+			}else if(mainVars.fuelType[i]==='hybrid'){
+				em=(d3.mean(dbf.keys(),function(d){return d;}))/100;
+				em=em*elecEmissions*uf;
+				em=em+(d3.mean(dbe.keys(),function(d){return d;})*(1-uf));
+				addMainVars(i, em);
+			}else if(mainVars.fuelType[i]==='') {
+				// Do nothing
+			}else{
+				em=d3.mean(dbe.keys());
+				addMainVars(i, em);
+			};
+		};
+	}
+
+	drawPlot2();
+}
+
+drawPlot2 = function(){
+	mainVars.xBar.domain([0,4])	
+	mainVars.yBar.domain([0,d3.max(mainVars.emissionsData)+50]);
+
+	var plot2 = d3.select('#plot-loc2').select('svg').select('g');
+
+	var drawBars = plot2.selectAll('bar')
+        .data(mainVars.emissionsData)
+        .enter().append('rect')
+        .attr('x', function(d,i) {return mainVars.xBar(i+1);})
+		.attr('width', 50)
+        .attr('y', function(d) {return mainVars.yBar(0)})
+    	.attr('height', function(d) {return 0})
+    	.style('opacity',.7)
+        .style('fill',function(d,i){if(mainVars.fuelType[i]=='gas'){
+        		return 'grey';}
+			else if(mainVars.fuelType[i]=='electric') {
+				return 'green';}
+			else{return 'blue';}
+		})
+    	.on("mouseenter", function(actual,i){
+    		d3.select(this)
+    		.style('opacity',1.0)
+    		.attr("width",60)
+    	})
+    	.on("mouseleave",function(actual,i){
+    		d3.select(this)
+        	.style('opacity',.7)
+    		.attr("width",50)
+    	});
+
+    // Transition lines from 0 to height
+    drawBars.transition()
+    	.delay(function (d, i) { return i*50; })
+   	    .ease(d3.easeLinear)
+   	    .duration(350)
+   	    .attr('y', function(d) {return mainVars.yBar(d)})
+    	.attr('height', function(d) {return mainVars.yBar(0) - mainVars.yBar(d)})
+
+    plot2.append('g')
+    	.attr("transform", "translate("+20+",0)")
+        .call(d3.axisLeft(mainVars.yBar))
+                
+    plot2.append('g')
+        .attr("transform", "translate("+20+"," + (mainVars.height-50) + ")")
+        .call(d3.axisBottom(mainVars.xBar).ticks(0))
+
+    plot2.append('g')
+		.selectAll('text')
+		.data(mainVars.emissionsLabel).enter()
+		.append('text')
+		.attr('x', function(d,i){return mainVars.xBar(i+1)+25;})
+     	.attr('y', function(d){return mainVars.yBar(0)+25;})
+		.text(function(d){return d;})
+		.attr('fill','black')
+		.style("font-size", "12px")
+		.attr('text-anchor','middle');
+
+    plot2.append("text")
+		.attr("transform","translate(" + 0 + " ," +(250) + ")")
+		.attr("dx","-250")
+    	.attr("dy","-20")
+	  	.style("text-anchor", "middle")
+	  	.attr("transform","rotate(-90)")
+	  	.style("font-size", "14px")
+	  	.text("CO2 Emissions (grams/mile)");
+
+	// Add clip cars to plot
+  	for(i=0;i<3;i++){
+		plot2.append('svg:image')
+			.attr('xlink:href','./images/'+mainVars.fuelType[i]+'.png')
+			.attr('x',mainVars.xBar(i+1))
+			.attr('y',mainVars.yBar(mainVars.emissionsData[i])-50)
+			.attr("width",50)
+			.attr("height",50);
+    }
+};
