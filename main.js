@@ -4,7 +4,11 @@
 // Defines main plotting variables
 var mainVars = {
 	margin : {top: 5, right: 30, bottom: 5, left: 40, padding: 15},
-    colorScale : d3.scaleOrdinal(d3.schemeCategory10)
+    colorScale : d3.scaleOrdinal(d3.schemeCategory10),
+    car : ['', '', ''],
+    emissionsData : [0, 0, 0],
+    emissionsLabel : ['', '', ''],
+    fuelType : ['', '', '']
 };
 
 mainVars.width = 460 - mainVars.margin.left - mainVars.margin.right;
@@ -12,7 +16,7 @@ mainVars.height = 500 - mainVars.margin.top - mainVars.margin.bottom;
 mainVars.xScale = d3.scaleTime().range([0, mainVars.width-10]);
 mainVars.yScale = d3.scaleLinear().range([mainVars.height-50, 120]);
 mainVars.xBar = d3.scaleLinear().range([0, mainVars.width-10]);
-mainVars.yBar = d3.scaleLinear().range([mainVars.height-50, 100]);
+mainVars.yBar = d3.scaleLinear().range([mainVars.height-50, 0]);
 
 /**
  * Initializes the first plot and its dropdown
@@ -63,15 +67,18 @@ initializePlot2 = function() {
 			.key(function(d){return d.year;})
 			.map(data);
 
-		var selectyr1 = d3.select("#cars-dropdown1")
-    		.append("select")
-    		.on('change', changeYear1);
+		// Create car selection dropdowns
+		for(i=1; i<4; i++){
+			var selectyr1 = d3.select("#cars-dropdown"+i.toString())
+	    		.append("select")
+	    		.on('click', changeYear);
 
-		selectyr1.selectAll('option')
-			.data(mainVars.dby1.keys())
-			.enter()
-			.append('option')
-			.text(function (d) { return d; });
+			selectyr1.selectAll('option')
+				.data(mainVars.dby1.keys())
+				.enter()
+				.append('option')
+				.text(function (d) { return d; });
+		}
     });
 
 	d3.select('#plot-loc2').append('svg')
